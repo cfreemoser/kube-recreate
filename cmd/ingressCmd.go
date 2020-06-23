@@ -9,39 +9,28 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-type refreshCmd struct {
-	out          io.Writer
-	ns           string
-	resourceType ResourceType
-	reporter     *Reporter
+type ingressCmd struct {
+	out      io.Writer
+	ns       string
+	reporter *Reporter
 }
 
-type ResourceType string
-
-const (
-	Ingress ResourceType = "Ingress"
-)
-
-// NewRefreshCommand creates the command for rendering the Kubernetes server version.
-func NewRefreshCommand(streams genericclioptions.IOStreams) *cobra.Command {
-	rCmd := &refreshCmd{
+func NewIngressCommand(streams genericclioptions.IOStreams) *cobra.Command {
+	rCmd := &ingressCmd{
 		out:      streams.Out,
-		ns:       getNamespace(genericclioptions.NewConfigFlags(true)),
 		reporter: NewReporter(streams.Out),
 	}
 
 	cmd := &cobra.Command{
-		Use:          "refresh",
+		Use:          "ingress",
 		Short:        "Deletes and recreates all ingress resources",
 		SilenceUsage: true,
 		RunE: func(c *cobra.Command, args []string) error {
 			if len(args) != 1 {
 				return errors.New("this command does not accept arguments")
 			}
-			err := rCmd.parseArgs(args)
-			if err != nil {
-				return err
-			}
+			rCmd.ns = getNamespace(genericclioptions.NewConfigFlags(true), c)
+
 			return rCmd.run()
 		},
 	}
@@ -49,7 +38,7 @@ func NewRefreshCommand(streams genericclioptions.IOStreams) *cobra.Command {
 	return cmd
 }
 
-func (ir *refreshCmd) run() error {
+func (ir *ingressCmd) run() error {
 	client, err := k8s.NewK8sClient()
 	if err != nil {
 		return err
@@ -78,24 +67,4 @@ func (ir *refreshCmd) run() error {
 
 	ir.reporter.PrintReport()
 	return nil
-}
-
-func (ir *refreshCmd) parseArgs(args []string) error {
-	rArg := args[0]
-	switch rArg {
-	case "ingress":
-		ir.resourceType = ResourceType("Ingress")
-		return nil
-	default:
-		return errors.New("Unkown resource type")
-	}
-}
-
-// getNamespace takes a set of kubectl flag values and returns the namespace we should be operating in
-func getNamespace(flags *genericclioptions.ConfigFlags) string {
-	namespace, _, err := flags.ToRawKubeConfigLoader().Namespace()
-	if err != nil || len(namespace) == 0 {
-		namespace = "default"
-	}
-	return namespace
 }
