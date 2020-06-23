@@ -47,6 +47,18 @@ func (client *K8sClient) LsIngress(namespace string) ([]v1beta1.Ingress, error) 
 	return ingressesList.Items, nil
 }
 
+func (client *K8sClient) GetIngress(namespace, name string) (v1beta1.Ingress, error) {
+	ctx := context.Background()
+	iclient := client.clientset.NetworkingV1beta1().Ingresses(namespace)
+
+	ingress, err := iclient.Get(ctx, name, v1.GetOptions{})
+	if err != nil {
+		return v1beta1.Ingress{}, err
+	}
+
+	return *ingress, nil
+}
+
 func (client *K8sClient) DeleteIngress(ingress *v1beta1.Ingress) error {
 	ctx := context.Background()
 	iclient := client.clientset.NetworkingV1beta1().Ingresses(ingress.Namespace)

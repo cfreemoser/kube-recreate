@@ -18,6 +18,7 @@ func NewRefreshCommand(streams genericclioptions.IOStreams) *cobra.Command {
 	}
 
 	cmd.PersistentFlags().StringP("namespace", "n", "", "Set the namespace")
+	cmd.PersistentFlags().BoolP("all", "a", false, "All resources in namespace")
 
 	cmd.AddCommand(NewIngressCommand(streams))
 
@@ -36,4 +37,12 @@ func getNamespace(flags *genericclioptions.ConfigFlags, cmd *cobra.Command) stri
 	}
 
 	return ns
+}
+
+func getAllFlag(cmd *cobra.Command) bool {
+	all, err := cmd.Flags().GetBool("all")
+	if err != nil {
+		return false
+	}
+	return all
 }
