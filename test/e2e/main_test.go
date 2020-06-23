@@ -1,44 +1,64 @@
 package e2e
 
 import (
+	"context"
+	"fmt"
 	"os"
 	"path"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
+	v1beta1 "k8s.io/api/networking/v1beta1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/kind/pkg/cluster"
 )
 
+var (
+	clientset *kubernetes.Clientset
+)
+
 func TestMain(m *testing.M) {
 	provider := cluster.NewProvider()
-	// TODO bootstrepping und cleanup not working?
 	setup(provider)
 	code := m.Run()
 	shutdown(provider)
 	os.Exit(code)
 }
 
-func setup(provider *cluster.Provider) {
-	provider.Create(
-		"e2eTesting",
+func createCluster(provider *cluster.Provider) {
+	err := provider.Create(
+		"e2e",
 		cluster.CreateWithNodeImage("kindest/node:v1.18.0"),
 		cluster.CreateWithWaitForReady(5*time.Minute),
+		cluster.CreateWithDisplayUsage(true),
+		cluster.CreateWithDisplaySalutation(true),
 	)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func setup(provider *cluster.Provider) {
+	createCluster(provider)
+	clientset = mustClientset()
+	populateClusterWithIngresses(clientset)
 }
 
 func shutdown(provider *cluster.Provider) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		panic("Could not perform cleanup")
+		panic(err)
 	}
 
 	kubeconfigPath := path.Join(homeDir, ".kube", "config")
 
-	provider.Delete("e2eTesting", kubeconfigPath)
+	err = provider.Delete("e2eTesting", kubeconfigPath)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func createClientset() (*kubernetes.Clientset, error) {
@@ -57,9 +77,11 @@ func createClientset() (*kubernetes.Clientset, error) {
 	return kubernetes.NewForConfig(config)
 }
 
-func mustClientset(t *testing.T) *kubernetes.Clientset {
+func mustClientset() *kubernetes.Clientset {
 	clientset, err := createClientset()
-	assert.NoError(t, err)
+	if err != nil {
+		panic(err)
+	}
 	return clientset
 }
 
@@ -69,5 +91,19 @@ func mockStreams() genericclioptions.IOStreams {
 		Out:    os.Stdout,
 		ErrOut: os.Stderr,
 	}
+}
 
+func populateClusterWithIngresses(clientset *kubernetes.Clientset) []*v1beta1.Ingress {
+	var ingresses []*v1beta1.Ingress
+	ctx := context.Background()
+
+	for i := 0; i < 10; i++ {
+		ing, err := clientset.NetworkingV1beta1().Ingresses("default").Create(ctx, createIngress(fmt.Sprintf("test-ingress-%d", i)), v1.CreateOptions{})
+		if err != nil {
+			panic(err)
+		}
+		ingresses = append(ingresses, ing)
+	}
+
+	return ingresses
 }

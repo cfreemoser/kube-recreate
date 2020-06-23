@@ -2,16 +2,16 @@ package e2e
 
 import (
 	"context"
-	"fmt"
 	"kube-recreate/cmd"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	core "k8s.io/api/core/v1"
 	v1beta1 "k8s.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/client-go/kubernetes"
 )
 
 func createIngress(name string) *v1beta1.Ingress {
@@ -30,35 +30,59 @@ func createIngress(name string) *v1beta1.Ingress {
 	}
 }
 
-func populateClusterWithIngresses(t *testing.T, clientset *kubernetes.Clientset) []*v1beta1.Ingress {
-	var ingresses []*v1beta1.Ingress
-	ctx := context.Background()
-
-	for i := 0; i < 10; i++ {
-		ing, err := clientset.NetworkingV1beta1().Ingresses("default").Create(ctx, createIngress(fmt.Sprintf("test-ingress-%d", i)), v1.CreateOptions{})
-		assert.NoError(t, err)
-		ingresses = append(ingresses, ing)
+func createNs(name string) *core.Namespace {
+	return &core.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+		Spec:     core.NamespaceSpec{},
+		Status:   core.NamespaceStatus{},
+		TypeMeta: v1.TypeMeta{},
 	}
+}
 
-	return ingresses
+func lsIngress(t *testing.T) []v1beta1.Ingress {
+	temp, err := clientset.NetworkingV1beta1().Ingresses("default").List(context.Background(), v1.ListOptions{})
+	assert.NoError(t, err)
+	return temp.Items
 }
 
 func TestDeletionOfOneIngress(t *testing.T) {
-	clientset := mustClientset(t)
-	iCmd := cmd.NewIngressCommand(mockStreams())
+	iCmd := cmd.NewRefreshCommand(mockStreams())
 	iCmd.SetArgs([]string{
+		"ingress",
 		"test-ingress-0",
 	})
 
-	beforeList := populateClusterWithIngresses(t, clientset)
+	beforeList := lsIngress(t)
 
 	err := iCmd.Execute()
 	assert.NoError(t, err)
 
-	afterList, _ := clientset.NetworkingV1beta1().Ingresses("default").List(context.Background(), v1.ListOptions{})
+	afterList := lsIngress(t)
+	assert.NoError(t, err)
 
-	assert.NotEqual(t, beforeList[0].ResourceVersion, afterList.Items[0].ResourceVersion)
+	assert.NotEqual(t, beforeList[0].ResourceVersion, afterList[0].ResourceVersion)
 	for i := 1; i < 10; i++ {
-		assert.Equal(t, beforeList[i].ResourceVersion, afterList.Items[i].ResourceVersion)
+		assert.Equal(t, beforeList[i].ResourceVersion, afterList[i].ResourceVersion)
+	}
+}
+
+func TestDeletionOfAllIngress(t *testing.T) {
+	iCmd := cmd.NewRefreshCommand(mockStreams())
+	iCmd.SetArgs([]string{
+		"ingress",
+		"-a",
+	})
+
+	beforeList := lsIngress(t)
+
+	err := iCmd.Execute()
+	assert.NoError(t, err)
+
+	afterList := lsIngress(t)
+
+	for i := 0; i < 10; i++ {
+		assert.NotEqual(t, beforeList[i].ResourceVersion, afterList[i].ResourceVersion)
 	}
 }
