@@ -29,6 +29,10 @@ jobs:
             curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
             dep ensure
         fi
+        
+    - name: Setup Agent
+      run: |
+        mkdir $HOME/.kube
         touch $HOME/.kube/config
 
     - name: Build
