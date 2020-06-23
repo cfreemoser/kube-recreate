@@ -48,26 +48,25 @@ func setup(provider *cluster.Provider) {
 }
 
 func shutdown(provider *cluster.Provider) {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		panic(err)
-	}
+	kubeconfigPath := mustKubeconfigPath()
 
-	kubeconfigPath := path.Join(homeDir, ".kube", "config")
-
-	err = provider.Delete("e2eTesting", kubeconfigPath)
+	err := provider.Delete("e2eTesting", kubeconfigPath)
 	if err != nil {
 		panic(err)
 	}
 }
 
-func createClientset() (*kubernetes.Clientset, error) {
+func mustKubeconfigPath() string {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
-	kubeconfigPath := path.Join(homeDir, ".kube", "config")
+	return path.Join(homeDir, ".kube", "config")
+}
+
+func createClientset() (*kubernetes.Clientset, error) {
+	kubeconfigPath := mustKubeconfigPath()
 
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
 	if err != nil {
