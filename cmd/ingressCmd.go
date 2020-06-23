@@ -72,7 +72,6 @@ func (ir *ingressCmd) run(name string) error {
 	for _, ingress := range ingL {
 		client.DeleteIngress(&ingress)
 		ir.reporter.Append(ingress.Name, "Ingress", "DELETED", ingress.CreationTimestamp.String())
-
 	}
 
 	ir.reporter.AddSeperator()
