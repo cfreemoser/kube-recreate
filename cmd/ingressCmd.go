@@ -25,7 +25,7 @@ func NewIngressCommand(streams genericclioptions.IOStreams) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:          "ingress",
+		Use:          "ingress [name]",
 		Short:        "Deletes and recreates all ingress resources",
 		SilenceUsage: true,
 		RunE: func(c *cobra.Command, args []string) error {
