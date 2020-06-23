@@ -16,6 +16,9 @@ build:
 install:
 	$(GOBUILD) -o $(BINARY_NAME) -v
 	mv $(BINARY_NAME)  /usr/local/bin
+e2e-test:
+	$(GOTEST) -v  ./test/e2e
+
 
 
 # Cross compilation
