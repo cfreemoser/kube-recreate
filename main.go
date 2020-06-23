@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"refresher/cmd"
+	"kube-recreate/cmd"
 
 	"github.com/spf13/pflag"
 	"k8s.io/cli-runtime/pkg/genericclioptions"

@@ -1,4 +1,4 @@
-module refresher
+module kube-recreate
 
 go 1.14
 
