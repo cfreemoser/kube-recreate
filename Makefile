@@ -9,6 +9,9 @@ BINARY_UNIX=$(BINARY_NAME)
 BINARY_WINDOWS=$(BINARY_NAME).exe
 
 all: build
+lint:
+	wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.23.7
+	./bin/golangci-lint run ./...		
 test:
 	$(GOTEST) -v ./...
 build:
