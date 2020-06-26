@@ -5,9 +5,6 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-type refreshCmd struct {
-}
-
 // NewRefreshCommand creates the command for rendering the Kubernetes server version.
 func NewRefreshCommand(streams genericclioptions.IOStreams) *cobra.Command {
 

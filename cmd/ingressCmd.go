@@ -31,7 +31,7 @@ func NewIngressCommand(streams genericclioptions.IOStreams) *cobra.Command {
 		RunE: func(c *cobra.Command, args []string) error {
 			rCmd.ns = getNamespace(genericclioptions.NewConfigFlags(true), c)
 
-			if getAllFlag(c) == true {
+			if getAllFlag(c) {
 				return rCmd.run("")
 			}
 			if len(args) == 1 {
@@ -51,42 +51,48 @@ func (ir *ingressCmd) run(name string) error {
 		return err
 	}
 
-	ingL := make([]v1beta1.Ingress, 0)
-
+	var ingresses []v1beta1.Ingress
 	if len(name) == 0 {
 		l, err := client.LsIngress(ir.ns)
 		if err != nil {
 			return err
 		}
 
-		ingL = append(ingL, l...)
+		ingresses = append(ingresses, l...)
 	} else {
 		i, err := client.GetIngress(ir.ns, name)
 		if err != nil {
 			return err
 		}
 
-		ingL = append(ingL, i)
+		ingresses = append(ingresses, i)
 	}
 
-	for _, ingress := range ingL {
-		client.DeleteIngress(&ingress)
-		ir.reporter.Append(ingress.Name, "Ingress", "DELETED", ingress.CreationTimestamp.String())
+	deleteAndRecreate(ingresses, ir.reporter, client)
+
+	ir.reporter.PrintReport()
+	return nil
+}
+
+func deleteAndRecreate(ingresses []v1beta1.Ingress, reporter *util.Reporter, client *k8s.K8sClient) {
+	for _, ingress := range ingresses {
+		err := client.DeleteIngress(&ingress)
+		if err != nil {
+			reporter.Append(ingress.Name, "Ingress", "FAILED", ingress.CreationTimestamp.String())
+		}
+		reporter.Append(ingress.Name, "Ingress", "DELETED", ingress.CreationTimestamp.String())
 	}
 
-	ir.reporter.AddSeperator()
+	reporter.AddSeperator()
 
-	for _, ingress := range ingL {
+	for _, ingress := range ingresses {
 		ingress.ResourceVersion = ""
 
 		i, err := client.CreateIngress(&ingress)
 		if err != nil {
-			ir.reporter.Append(ingress.Name, "Ingress", "FAILED", ingress.CreationTimestamp.String())
+			reporter.Append(ingress.Name, "Ingress", "FAILED", ingress.CreationTimestamp.String())
 		}
 
-		ir.reporter.Append(i.Name, "Ingress", "CREATED", i.CreationTimestamp.String())
+		reporter.Append(i.Name, "Ingress", "CREATED", i.CreationTimestamp.String())
 	}
-
-	ir.reporter.PrintReport()
-	return nil
 }

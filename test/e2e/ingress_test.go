@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	core "k8s.io/api/core/v1"
 	v1beta1 "k8s.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -30,16 +29,16 @@ func createIngress(name string) *v1beta1.Ingress {
 	}
 }
 
-func createNs(name string) *core.Namespace {
-	return &core.Namespace{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
-		},
-		Spec:     core.NamespaceSpec{},
-		Status:   core.NamespaceStatus{},
-		TypeMeta: v1.TypeMeta{},
-	}
-}
+// func createNs(name string) *core.Namespace {
+// 	return &core.Namespace{
+// 		ObjectMeta: metav1.ObjectMeta{
+// 			Name: name,
+// 		},
+// 		Spec:     core.NamespaceSpec{},
+// 		Status:   core.NamespaceStatus{},
+// 		TypeMeta: v1.TypeMeta{},
+// 	}
+// }
 
 func lsIngress(t *testing.T) []v1beta1.Ingress {
 	temp, err := clientset.NetworkingV1beta1().Ingresses("default").List(context.Background(), v1.ListOptions{})

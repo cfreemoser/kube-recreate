@@ -31,7 +31,10 @@ jobs:
         fi
 
     - name: Build
-      run: make build     
+      run: make build    
+
+    - name: Lint
+      run: make lint 
     
     - name: Get E2E dependencies
       run: |
