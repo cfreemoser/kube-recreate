@@ -31,5 +31,5 @@ jobs:
           prerelease: true
           title: "Development Build"
           files: |
-            kubectl-create
-            kubectl-create.exe
+            release/kubectl-recreate
+            release/kubectl-recreate.exe
