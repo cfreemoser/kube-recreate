@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - "master"
+    tags:
+      - "v*"
 
 jobs:
   pre-release:
@@ -11,7 +13,6 @@ jobs:
     runs-on: "ubuntu-latest"
 
     steps:
-      # ...
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
