@@ -1,12 +1,14 @@
 package cmd
 
 import (
+	"kube-recreate/pkg/util"
+
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
 // NewRefreshCommand creates the command for rendering the Kubernetes server version.
-func NewRefreshCommand(streams genericclioptions.IOStreams) *cobra.Command {
+func NewRefreshCommand(streams genericclioptions.IOStreams, version, commit, branch string) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:          "recreate",
@@ -17,7 +19,20 @@ func NewRefreshCommand(streams genericclioptions.IOStreams) *cobra.Command {
 	cmd.PersistentFlags().StringP("namespace", "n", "", "Set the namespace")
 	cmd.PersistentFlags().BoolP("all", "a", false, "All resources in namespace")
 
-	cmd.AddCommand(NewIngressCommand(streams))
+	vCmd := &VersionCmd{
+		out:     streams.Out,
+		commit:  commit,
+		version: version,
+		branch:  branch,
+	}
+
+	rCmd := &ingressCmd{
+		out:      streams.Out,
+		reporter: util.NewReporter(streams.Out),
+	}
+
+	cmd.AddCommand(NewIngressCommand(rCmd))
+	cmd.AddCommand(NewVersionCommand(vCmd))
 
 	return cmd
 }

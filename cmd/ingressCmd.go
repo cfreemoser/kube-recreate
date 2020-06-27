@@ -18,12 +18,7 @@ type ingressCmd struct {
 	reporter *util.Reporter
 }
 
-func NewIngressCommand(streams genericclioptions.IOStreams) *cobra.Command {
-	rCmd := &ingressCmd{
-		out:      streams.Out,
-		reporter: util.NewReporter(streams.Out),
-	}
-
+func NewIngressCommand(rCmd *ingressCmd) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "ingress [name]",
 		Short:        "Deletes and recreates all ingress resources",
