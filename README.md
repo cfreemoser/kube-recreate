@@ -1,7 +1,7 @@
 
 <h1 align="center">
   <br>
-  <a href="https://craftcodecrew.com/><img src="https://github.com/cfreemoser/kube-recreate/blob/master/cover.png" alt="Kubectl-recreate" width="200"></a>
+  <a href="https://craftcodecrew.com/><img src="https://raw.githubusercontent.com/cfreemoser/kube-recreate/master/cover.png" alt="Kubectl-recreate" width="200"></a>
   <br>
   Kubectl-recreate
   <br>
