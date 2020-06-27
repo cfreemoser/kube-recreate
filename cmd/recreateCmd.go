@@ -13,12 +13,6 @@ func NewRefreshCommand(streams genericclioptions.IOStreams) *cobra.Command {
 		Short:        "Deletes and recreates all ingress resources",
 		SilenceUsage: true,
 	}
-
-	cmd.PersistentFlags().StringP("namespace", "n", "", "Set the namespace")
-	cmd.PersistentFlags().BoolP("all", "a", false, "All resources in namespace")
-
-	cmd.AddCommand(NewIngressCommand(streams))
-
 	return cmd
 }
 

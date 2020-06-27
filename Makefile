@@ -8,6 +8,12 @@ BINARY_NAME=kubectl-recreate
 BINARY_UNIX=$(BINARY_NAME)
 BINARY_WINDOWS=$(BINARY_NAME).exe
 
+VERSION?=?
+COMMIT=$(shell git rev-parse HEAD)
+BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
+
+LDFLAGS = -ldflags "-X main.VERSION=${VERSION} -X main.COMMIT=${COMMIT} -X main.BRANCH=${BRANCH}"
+
 all: build
 lint:
 	wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.23.7
@@ -15,9 +21,9 @@ lint:
 test:
 	$(GOTEST) -v ./...
 build:
-	$(GOBUILD) -o $(BINARY_NAME) -v
+	$(GOBUILD) -o $(BINARY_NAME) -v ${LDFLAGS}
 install:
-	$(GOBUILD) -o $(BINARY_NAME) -v
+	$(GOBUILD) -o $(BINARY_NAME) -v ${LDFLAGS}
 	mv $(BINARY_NAME)  /usr/local/bin
 e2e-test:
 	$(GOTEST) -v  ./test/e2e
