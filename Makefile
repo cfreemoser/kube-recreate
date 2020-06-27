@@ -8,12 +8,11 @@ BINARY_NAME=kubectl-recreate
 BINARY_UNIX=$(BINARY_NAME)
 BINARY_WINDOWS=$(BINARY_NAME).exe
 
-VERSION?=?
 RELEASE_VERSION=$(shell git describe --tags $(git rev-list --tags --max-count=1))
 COMMIT=$(shell git rev-parse HEAD)
 BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
 
-LDFLAGS = -ldflags "-X main.VERSION=${VERSION} -X main.COMMIT=${COMMIT} -X main.BRANCH=${BRANCH}"
+LDFLAGS = -ldflags "-X main.COMMIT=${COMMIT} -X main.BRANCH=${BRANCH}"
 RELEASE_LDFLAGS = -ldflags "-X main.VERSION=${RELEASE_VERSION} -X main.COMMIT=${COMMIT} -X main.BRANCH=${BRANCH}"
 
 all: build
