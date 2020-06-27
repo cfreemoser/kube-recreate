@@ -5,6 +5,7 @@ import (
 	"kube-recreate/cmd"
 	"testing"
 
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	v1beta1 "k8s.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -46,8 +47,12 @@ func lsIngress(t *testing.T) []v1beta1.Ingress {
 	return temp.Items
 }
 
+func RefreshCommand() *cobra.Command {
+	return cmd.NewRefreshCommand(mockStreams(), "", "", "")
+}
+
 func TestDeletionOfOneIngress(t *testing.T) {
-	iCmd := cmd.NewRefreshCommand(mockStreams())
+	iCmd := RefreshCommand()
 	iCmd.SetArgs([]string{
 		"ingress",
 		"test-ingress-0",
@@ -68,7 +73,7 @@ func TestDeletionOfOneIngress(t *testing.T) {
 }
 
 func TestDeletionOfAllIngress(t *testing.T) {
-	iCmd := cmd.NewRefreshCommand(mockStreams())
+	iCmd := RefreshCommand()
 	iCmd.SetArgs([]string{
 		"ingress",
 		"-a",

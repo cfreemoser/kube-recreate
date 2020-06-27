@@ -5,7 +5,6 @@ import (
 	"io"
 
 	"github.com/spf13/cobra"
-	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
 type VersionCmd struct {
@@ -16,19 +15,13 @@ type VersionCmd struct {
 }
 
 // NewVersionCommand prints the version of this kubectl plugin.
-func NewVersionCommand(streams genericclioptions.IOStreams, version, commit, branch string) *cobra.Command {
-	vCmd := &VersionCmd{
-		out:     streams.Out,
-		commit:  commit,
-		version: version,
-		branch:  branch,
-	}
+func NewVersionCommand(versionCmd *VersionCmd) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:          "version",
 		Short:        "Prints the version of kubectl-recreate",
 		SilenceUsage: true,
-		Run:          vCmd.run,
+		Run:          versionCmd.run,
 	}
 
 	return cmd

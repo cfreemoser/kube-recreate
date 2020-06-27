@@ -18,12 +18,7 @@ func main() {
 	pflag.CommandLine = flags
 
 	streams := genericclioptions.IOStreams{In: os.Stdin, Out: os.Stdout, ErrOut: os.Stderr}
-	refreshCmd := cmd.NewRefreshCommand(streams)
-	refreshCmd.PersistentFlags().StringP("namespace", "n", "", "Set the namespace")
-	refreshCmd.PersistentFlags().BoolP("all", "a", false, "All resources in namespace")
-
-	refreshCmd.AddCommand(cmd.NewIngressCommand(streams))
-	refreshCmd.AddCommand(cmd.NewVersionCommand(streams, VERSION, COMMIT, BRANCH))
+	refreshCmd := cmd.NewRefreshCommand(streams, VERSION, COMMIT, BRANCH)
 	if err := refreshCmd.Execute(); err != nil {
 		os.Exit(1)
 	}
