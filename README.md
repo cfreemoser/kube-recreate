@@ -12,7 +12,7 @@
 <p align="center">
   <a href="https://github.com/cfreemoser/kube-recreate/actions?query=workflow%3A%22Lint+and+Test+Code%22"><img src="https://github.com/cfreemoser/kube-recreate/workflows/Lint%20and%20Test%20Code/badge.svg"></a>
 
-<a href="https://github.com/cfreemoser/kube-recreate/actions?query=workflow%3Apre-release"><img src="https://github.com/cfreemoser/kube-recreate/workflows/pre-release/badge.svg)"></a>
+<a href="https://github.com/cfreemoser/kube-recreate/actions?query=workflow%3Apre-release"><img src="https://github.com/cfreemoser/kube-recreate/workflows/pre-release/badge.svg"></a>
 
 
  <a href="https://github.com/cfreemoser/kube-recreate/actions?query=workflow%3Arelease"><img src="https://github.com/cfreemoser/kube-recreate/workflows/release/badge.svg"></a>
