@@ -28,14 +28,14 @@ install:
 	mv $(BINARY_NAME)  /usr/local/bin
 e2e-test:
 	$(GOTEST) -v  ./test/e2e
-
-
-
 # Cross compilation
 build-linux:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -o $(BINARY_UNIX) -v
 build-windows:
 	GOOS=windows GOARCH=386 $(GOBUILD) -o $(BINARY_WINDOWS) -v
+build-pre-release:
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -o release/$(BINARY_UNIX) -v ${LDFLAGS}
+	GOOS=windows GOARCH=386 $(GOBUILD) -o release/$(BINARY_WINDOWS) -v ${LDFLAGS}
 build-release:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -o release/$(BINARY_UNIX) -v ${RELEASE_LDFLAGS}
 	GOOS=windows GOARCH=386 $(GOBUILD) -o release/$(BINARY_WINDOWS) -v ${RELEASE_LDFLAGS}
