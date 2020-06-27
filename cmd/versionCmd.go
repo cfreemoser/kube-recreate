@@ -41,4 +41,5 @@ func (vc *VersionCmd) run(c *cobra.Command, args []string) {
 	}
 
 	fmt.Fprintf(vc.out, "kubectl-recreate version: %s\n", vc.version)
+	fmt.Fprintf(vc.out, "build commit: %s\n", vc.commit)
 }
