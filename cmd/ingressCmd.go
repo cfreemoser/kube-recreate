@@ -37,7 +37,6 @@ func NewIngressCommand(rCmd *ingressCmd) *cobra.Command {
 				return rCmd.run("", true)
 
 			}
-
 			return errors.New("Define Resource or use --all")
 		},
 	}
