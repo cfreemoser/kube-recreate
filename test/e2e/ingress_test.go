@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"context"
+	"fmt"
 	"kube-recreate/cmd"
 	"testing"
 
@@ -30,19 +31,8 @@ func createIngress(name string) *v1beta1.Ingress {
 	}
 }
 
-// func createNs(name string) *core.Namespace {
-// 	return &core.Namespace{
-// 		ObjectMeta: metav1.ObjectMeta{
-// 			Name: name,
-// 		},
-// 		Spec:     core.NamespaceSpec{},
-// 		Status:   core.NamespaceStatus{},
-// 		TypeMeta: v1.TypeMeta{},
-// 	}
-// }
-
-func lsIngress(t *testing.T) []v1beta1.Ingress {
-	temp, err := clientset.NetworkingV1beta1().Ingresses("default").List(context.Background(), v1.ListOptions{})
+func lsIngress(t *testing.T, ns string) []v1beta1.Ingress {
+	temp, err := clientset.NetworkingV1beta1().Ingresses(ns).List(context.Background(), v1.ListOptions{})
 	assert.NoError(t, err)
 	return temp.Items
 }
@@ -51,19 +41,44 @@ func RefreshCommand() *cobra.Command {
 	return cmd.NewRefreshCommand(mockStreams(), "", "", "")
 }
 
+func TestDeletionOfAllIngressesInAllNamespaces(t *testing.T) {
+	iCmd := RefreshCommand()
+	iCmd.SetArgs([]string{
+		"ingress",
+		"--all-namespaces",
+	})
+
+	var beforeList []v1beta1.Ingress
+
+	for i := 0; i < 10; i++ {
+		beforeList = append(beforeList, lsIngress(t, fmt.Sprintf("test-%d", i))...)
+	}
+
+	err := iCmd.Execute()
+	assert.NoError(t, err)
+
+	for _, beforeIngress := range beforeList {
+		afterIngress, err := clientset.NetworkingV1beta1().Ingresses(beforeIngress.Namespace).Get(context.Background(), beforeIngress.Name, v1.GetOptions{})
+		assert.NoError(t, err)
+		assert.NotEqual(t, beforeIngress.ResourceVersion, afterIngress.ResourceVersion)
+	}
+}
+
 func TestDeletionOfOneIngress(t *testing.T) {
 	iCmd := RefreshCommand()
 	iCmd.SetArgs([]string{
 		"ingress",
 		"test-ingress-0",
+		"-n",
+		"test-0",
 	})
 
-	beforeList := lsIngress(t)
+	beforeList := lsIngress(t, "test-0")
 
 	err := iCmd.Execute()
 	assert.NoError(t, err)
 
-	afterList := lsIngress(t)
+	afterList := lsIngress(t, "test-0")
 	assert.NoError(t, err)
 
 	assert.NotEqual(t, beforeList[0].ResourceVersion, afterList[0].ResourceVersion)
@@ -76,15 +91,16 @@ func TestDeletionOfAllIngress(t *testing.T) {
 	iCmd := RefreshCommand()
 	iCmd.SetArgs([]string{
 		"ingress",
+		"-n",
+		"test-1",
 		"-a",
 	})
 
-	beforeList := lsIngress(t)
-
+	beforeList := lsIngress(t, "test-1")
 	err := iCmd.Execute()
 	assert.NoError(t, err)
 
-	afterList := lsIngress(t)
+	afterList := lsIngress(t, "test-1")
 
 	for i := 0; i < 10; i++ {
 		assert.NotEqual(t, beforeList[i].ResourceVersion, afterList[i].ResourceVersion)

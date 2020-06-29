@@ -2,9 +2,12 @@ package k8s
 
 import (
 	"context"
-	// TODO new api version
+	"fmt"
+
+	kv1 "k8s.io/api/core/v1"
 	v1beta1 "k8s.io/api/networking/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -52,6 +55,10 @@ func (client *K8sClient) GetIngress(namespace, name string) (v1beta1.Ingress, er
 	iclient := client.clientset.NetworkingV1beta1().Ingresses(namespace)
 
 	ingress, err := iclient.Get(ctx, name, v1.GetOptions{})
+	test, _ := client.LsIngress(namespace)
+	for _, t := range test {
+		fmt.Println(t.Name)
+	}
 	if err != nil {
 		return v1beta1.Ingress{}, err
 	}
@@ -69,4 +76,13 @@ func (client *K8sClient) CreateIngress(ingress *v1beta1.Ingress) (*v1beta1.Ingre
 	ctx := context.Background()
 	iclient := client.clientset.NetworkingV1beta1().Ingresses(ingress.Namespace)
 	return iclient.Create(ctx, ingress, v1.CreateOptions{})
+}
+
+func (client *K8sClient) LsNamespaces() ([]kv1.Namespace, error) {
+	ctx := context.Background()
+	list, err := client.clientset.CoreV1().Namespaces().List(ctx, v1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return list.Items, nil
 }

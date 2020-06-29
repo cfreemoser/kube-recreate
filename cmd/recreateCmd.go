@@ -16,8 +16,9 @@ func NewRefreshCommand(streams genericclioptions.IOStreams, version, commit, bra
 		SilenceUsage: true,
 	}
 
-	cmd.PersistentFlags().StringP("namespace", "n", "", "Set the namespace")
-	cmd.PersistentFlags().BoolP("all", "a", false, "All resources in namespace")
+	cmd.PersistentFlags().StringP("namespace", "n", "", "Select the namespace")
+	cmd.PersistentFlags().BoolP("all", "a", false, "If present, recreate all object(s) in namespace")
+	cmd.PersistentFlags().Bool("all-namespaces", false, "If present, recreate the requested object(s) across all namespaces.")
 
 	vCmd := &VersionCmd{
 		out:     streams.Out,
@@ -53,6 +54,14 @@ func getNamespace(flags *genericclioptions.ConfigFlags, cmd *cobra.Command) stri
 
 func getAllFlag(cmd *cobra.Command) bool {
 	all, err := cmd.Flags().GetBool("all")
+	if err != nil {
+		return false
+	}
+	return all
+}
+
+func getAllNamespacesFlag(cmd *cobra.Command) bool {
+	all, err := cmd.Flags().GetBool("all-namespaces")
 	if err != nil {
 		return false
 	}

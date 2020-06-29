@@ -8,8 +8,10 @@ import (
 	"testing"
 	"time"
 
+	v1 "k8s.io/api/core/v1"
+
 	v1beta1 "k8s.io/api/networking/v1beta1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	apiV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -44,7 +46,7 @@ func createCluster(provider *cluster.Provider) {
 func setup(provider *cluster.Provider) {
 	createCluster(provider)
 	clientset = mustClientset()
-	populateClusterWithIngresses(clientset)
+	populateClusterWithIngresses(clientset, createNamespace(clientset))
 }
 
 func shutdown(provider *cluster.Provider) {
@@ -92,16 +94,31 @@ func mockStreams() genericclioptions.IOStreams {
 	}
 }
 
-func populateClusterWithIngresses(clientset *kubernetes.Clientset) []*v1beta1.Ingress {
-	var ingresses []*v1beta1.Ingress
-	ctx := context.Background()
+func createNamespace(clientset *kubernetes.Clientset) []*v1.Namespace {
+	var namespaces []*v1.Namespace
 
+	ctx := context.Background()
 	for i := 0; i < 10; i++ {
-		ing, err := clientset.NetworkingV1beta1().Ingresses("default").Create(ctx, createIngress(fmt.Sprintf("test-ingress-%d", i)), v1.CreateOptions{})
+		ns, err := clientset.CoreV1().Namespaces().Create(ctx, &v1.Namespace{ObjectMeta: apiV1.ObjectMeta{Name: fmt.Sprintf("test-%d", i)}}, apiV1.CreateOptions{})
 		if err != nil {
 			panic(err)
 		}
-		ingresses = append(ingresses, ing)
+		namespaces = append(namespaces, ns)
+	}
+	return namespaces
+}
+
+func populateClusterWithIngresses(clientset *kubernetes.Clientset, namespaces []*v1.Namespace) []*v1beta1.Ingress {
+	var ingresses []*v1beta1.Ingress
+	ctx := context.Background()
+	for _, ns := range namespaces {
+		for i := 0; i < 10; i++ {
+			ing, err := clientset.NetworkingV1beta1().Ingresses(ns.Name).Create(ctx, createIngress(fmt.Sprintf("test-ingress-%d", i)), apiV1.CreateOptions{})
+			if err != nil {
+				panic(err)
+			}
+			ingresses = append(ingresses, ing)
+		}
 	}
 
 	return ingresses
