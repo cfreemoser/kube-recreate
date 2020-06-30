@@ -2,20 +2,17 @@ package cmd
 
 import (
 	"fmt"
-	"io"
 
 	"github.com/spf13/cobra"
 )
 
 type VersionCmd struct {
-	out     io.Writer
-	version string
-	commit  string
-	branch  string
+	settings *CmdSetting
 }
 
 // NewVersionCommand prints the version of this kubectl plugin.
-func NewVersionCommand(versionCmd *VersionCmd) *cobra.Command {
+func NewVersionCommand(settings *CmdSetting) *cobra.Command {
+	versionCmd := &VersionCmd{settings: settings}
 
 	cmd := &cobra.Command{
 		Use:          "version",
@@ -28,11 +25,11 @@ func NewVersionCommand(versionCmd *VersionCmd) *cobra.Command {
 }
 
 func (vc *VersionCmd) run(c *cobra.Command, args []string) {
-	if len(vc.version) == 0 {
-		fmt.Fprintf(vc.out, "[DEV BUILD] %s: %s\n", vc.branch, vc.commit)
+	if len(vc.settings.CodeProperties.version) == 0 {
+		fmt.Fprintf(vc.settings.Out, "[DEV BUILD] %s: %s\n", vc.settings.CodeProperties.branch, vc.settings.CodeProperties.commit)
 		return
 	}
 
-	fmt.Fprintf(vc.out, "kubectl-recreate version: %s\n", vc.version)
-	fmt.Fprintf(vc.out, "build commit: %s\n", vc.commit)
+	fmt.Fprintf(vc.settings.Out, "kubectl-recreate version: %s\n", vc.settings.CodeProperties.version)
+	fmt.Fprintf(vc.settings.Out, "build commit: %s\n", vc.settings.CodeProperties.commit)
 }

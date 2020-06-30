@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"errors"
-	"io"
 	"kube-recreate/pkg/k8s"
 	"kube-recreate/pkg/util"
 
@@ -10,41 +8,34 @@ import (
 	v1beta1 "k8s.io/api/networking/v1beta1"
 
 	"github.com/spf13/cobra"
-	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-type ingressCmd struct {
-	out      io.Writer
-	ns       string
-	reporter *util.Reporter
+type IngressCmd struct {
+	settings *CmdSetting
 }
 
-func NewIngressCommand(rCmd *ingressCmd) *cobra.Command {
+func NewIngressCommand(settings *CmdSetting) *cobra.Command {
+
+	iCmd := &IngressCmd{settings: settings}
+
 	cmd := &cobra.Command{
 		Use:          "ingress [name]",
 		Short:        "Deletes and recreates all ingress resources",
 		SilenceUsage: true,
 		RunE: func(c *cobra.Command, args []string) error {
-			rCmd.ns = getNamespace(genericclioptions.NewConfigFlags(true), c)
-
-			if getAllFlag(c) {
-				return rCmd.run("", false)
-			}
 			if len(args) == 1 {
-				return rCmd.run(args[0], false)
+				settings.ObjectNameProvided = true
+				settings.ObjectName = args[0]
 			}
-			if getAllNamespacesFlag(c) {
-				return rCmd.run("", true)
 
-			}
-			return errors.New("Define Resource or use --all")
+			return iCmd.run()
 		},
 	}
 
 	return cmd
 }
 
-func (ir *ingressCmd) run(name string, allNamespaces bool) error {
+func (ir *IngressCmd) run() error {
 	client, err := k8s.NewK8sClient()
 	if err != nil {
 		return err
@@ -52,15 +43,15 @@ func (ir *ingressCmd) run(name string, allNamespaces bool) error {
 
 	var ingresses []v1beta1.Ingress
 	var namespaces []string
-	if len(name) == 0 {
-		if allNamespaces {
+	if ir.settings.ObjectNameProvided == false {
+		if ir.settings.AllNamespacesFlag() {
 			nsList, err := client.LsNamespaces()
 			if err != nil {
 				return err
 			}
 			namespaces = append(namespaces, mapNamespacesToNames(nsList)...)
 		} else {
-			namespaces = append(namespaces, ir.ns)
+			namespaces = append(namespaces, ir.settings.Namespace())
 		}
 
 		for _, ns := range namespaces {
@@ -72,7 +63,7 @@ func (ir *ingressCmd) run(name string, allNamespaces bool) error {
 			ingresses = append(ingresses, l...)
 		}
 	} else {
-		i, err := client.GetIngress(ir.ns, name)
+		i, err := client.GetIngress(ir.settings.Namespace(), ir.settings.ObjectName)
 		if err != nil {
 			return err
 		}
@@ -80,9 +71,9 @@ func (ir *ingressCmd) run(name string, allNamespaces bool) error {
 		ingresses = append(ingresses, i)
 	}
 
-	deleteAndRecreate(ingresses, ir.reporter, client)
+	deleteAndRecreate(ingresses, ir.settings.Reporter, client)
 
-	ir.reporter.PrintReport()
+	ir.settings.Reporter.PrintReport()
 	return nil
 }
 
