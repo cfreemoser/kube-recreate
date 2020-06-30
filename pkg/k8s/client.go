@@ -14,10 +14,13 @@ import (
 
 type K8sClient struct {
 	clientset *kubernetes.Clientset
+	context   context.Context
 }
 
 func NewK8sClient() (*K8sClient, error) {
-	client := &K8sClient{}
+	client := &K8sClient{
+		context: context.Background(),
+	}
 
 	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
 	configOverrides := &clientcmd.ConfigOverrides{}
@@ -39,10 +42,9 @@ func NewK8sClient() (*K8sClient, error) {
 }
 
 func (client *K8sClient) LsIngress(namespace string) ([]v1beta1.Ingress, error) {
-	ctx := context.Background()
 	iclient := client.clientset.NetworkingV1beta1().Ingresses(namespace)
 
-	ingressesList, err := iclient.List(ctx, v1.ListOptions{})
+	ingressesList, err := iclient.List(client.context, v1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -51,10 +53,9 @@ func (client *K8sClient) LsIngress(namespace string) ([]v1beta1.Ingress, error) 
 }
 
 func (client *K8sClient) GetIngress(namespace, name string) (v1beta1.Ingress, error) {
-	ctx := context.Background()
 	iclient := client.clientset.NetworkingV1beta1().Ingresses(namespace)
 
-	ingress, err := iclient.Get(ctx, name, v1.GetOptions{})
+	ingress, err := iclient.Get(client.context, name, v1.GetOptions{})
 	test, _ := client.LsIngress(namespace)
 	for _, t := range test {
 		fmt.Println(t.Name)
@@ -67,20 +68,17 @@ func (client *K8sClient) GetIngress(namespace, name string) (v1beta1.Ingress, er
 }
 
 func (client *K8sClient) DeleteIngress(ingress *v1beta1.Ingress) error {
-	ctx := context.Background()
 	iclient := client.clientset.NetworkingV1beta1().Ingresses(ingress.Namespace)
-	return iclient.Delete(ctx, ingress.Name, v1.DeleteOptions{})
+	return iclient.Delete(client.context, ingress.Name, v1.DeleteOptions{})
 }
 
 func (client *K8sClient) CreateIngress(ingress *v1beta1.Ingress) (*v1beta1.Ingress, error) {
-	ctx := context.Background()
 	iclient := client.clientset.NetworkingV1beta1().Ingresses(ingress.Namespace)
-	return iclient.Create(ctx, ingress, v1.CreateOptions{})
+	return iclient.Create(client.context, ingress, v1.CreateOptions{})
 }
 
 func (client *K8sClient) LsNamespaces() ([]kv1.Namespace, error) {
-	ctx := context.Background()
-	list, err := client.clientset.CoreV1().Namespaces().List(ctx, v1.ListOptions{})
+	list, err := client.clientset.CoreV1().Namespaces().List(client.context, v1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
