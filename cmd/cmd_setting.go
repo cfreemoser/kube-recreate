@@ -62,7 +62,7 @@ func NewCmdSettings(opts ...CmdSettingOption) *CmdSetting {
 		defaultCodeProperties     = CodeProperties{commit: "dev", branch: "dev", version: "dev"}
 	)
 
-	h := &CmdSetting{
+	cmd := &CmdSetting{
 		Out:                defaultOut,
 		Reporter:           defaultReporter,
 		ObjectNameProvided: defaultObjectNameProvided,
@@ -71,45 +71,45 @@ func NewCmdSettings(opts ...CmdSettingOption) *CmdSetting {
 	}
 
 	for _, opt := range opts {
-		opt(h)
+		opt(cmd)
 	}
 
-	return h
+	return cmd
 }
 
 func WithObjectName(objectName string) CmdSettingOption {
-	return func(h *CmdSetting) {
-		h.ObjectName = objectName
-		h.ObjectNameProvided = true
+	return func(cmd *CmdSetting) {
+		cmd.ObjectName = objectName
+		cmd.ObjectNameProvided = true
 	}
 }
 
 func WithOutWriter(out io.Writer) CmdSettingOption {
-	return func(h *CmdSetting) {
-		h.Out = out
+	return func(cmd *CmdSetting) {
+		cmd.Out = out
 	}
 }
 
 func WithParentCmd(parent *cobra.Command) CmdSettingOption {
-	return func(h *CmdSetting) {
-		h.Parent = parent
+	return func(cmd *CmdSetting) {
+		cmd.Parent = parent
 	}
 }
 
 func WithCodeVersion(version string) CmdSettingOption {
-	return func(h *CmdSetting) {
-		h.CodeProperties.version = version
+	return func(cmd *CmdSetting) {
+		cmd.CodeProperties.version = version
 	}
 }
 
 func WithCodeCommit(commit string) CmdSettingOption {
-	return func(h *CmdSetting) {
-		h.CodeProperties.commit = commit
+	return func(cmd *CmdSetting) {
+		cmd.CodeProperties.commit = commit
 	}
 }
 
 func WithCodeBranch(branch string) CmdSettingOption {
-	return func(h *CmdSetting) {
-		h.CodeProperties.branch = branch
+	return func(cmd *CmdSetting) {
+		cmd.CodeProperties.branch = branch
 	}
 }

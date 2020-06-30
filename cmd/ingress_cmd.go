@@ -2,23 +2,23 @@ package cmd
 
 import (
 	"kube-recreate/pkg/k8s"
-	"kube-recreate/pkg/util"
 
-	kv1 "k8s.io/api/core/v1"
 	v1beta1 "k8s.io/api/networking/v1beta1"
 
 	"github.com/spf13/cobra"
 )
 
 type IngressCmd struct {
-	settings *CmdSetting
+	settings  *CmdSetting
+	client    *k8s.K8sClient
+	ingresses []v1beta1.Ingress
 }
 
 func NewIngressCommand(settings *CmdSetting) *cobra.Command {
 
-	iCmd := &IngressCmd{settings: settings}
+	ingressCmd := &IngressCmd{settings: settings}
 
-	cmd := &cobra.Command{
+	return &cobra.Command{
 		Use:          "ingress [name]",
 		Short:        "Deletes and recreates all ingress resources",
 		SilenceUsage: true,
@@ -28,82 +28,88 @@ func NewIngressCommand(settings *CmdSetting) *cobra.Command {
 				settings.ObjectName = args[0]
 			}
 
-			return iCmd.run()
+			err := ingressCmd.init()
+			if err != nil {
+				return err
+			}
+
+			return ingressCmd.run()
 		},
 	}
-
-	return cmd
 }
 
-func (ir *IngressCmd) run() error {
+func (ingressCmd *IngressCmd) run() error {
+	if ingressCmd.settings.ObjectNameProvided {
+		objectName := ingressCmd.settings.ObjectName
+		namespace := ingressCmd.settings.Namespace()
+		i, err := ingressCmd.client.Ingress.Get(objectName, namespace)
+		if err != nil {
+			return err
+		}
+
+		ingressCmd.ingresses = append(ingressCmd.ingresses, i)
+	}
+
+	if ingressCmd.settings.AllFlag() {
+		err := ingressCmd.appendIngressesFromNamespace(ingressCmd.settings.Namespace())
+		if err != nil {
+			return err
+		}
+	}
+
+	if ingressCmd.settings.AllNamespacesFlag() {
+		namespaces, err := ingressCmd.client.Namespace.Ls()
+		if err != nil {
+			return err
+		}
+
+		for _, ns := range namespaces {
+			err := ingressCmd.appendIngressesFromNamespace(ns.Name)
+			if err != nil {
+				return err
+			}
+		}
+
+	}
+
+	ingressCmd.deleteAndRecreate()
+
+	ingressCmd.settings.Reporter.PrintReport()
+	return nil
+}
+
+func (ir *IngressCmd) init() error {
 	client, err := k8s.NewK8sClient()
 	if err != nil {
 		return err
 	}
 
-	var ingresses []v1beta1.Ingress
-	var namespaces []string
-	if ir.settings.ObjectNameProvided == false {
-		if ir.settings.AllNamespacesFlag() {
-			nsList, err := client.LsNamespaces()
-			if err != nil {
-				return err
-			}
-			namespaces = append(namespaces, mapNamespacesToNames(nsList)...)
-		} else {
-			namespaces = append(namespaces, ir.settings.Namespace())
-		}
-
-		for _, ns := range namespaces {
-			l, err := client.LsIngress(ns)
-			if err != nil {
-				return err
-			}
-
-			ingresses = append(ingresses, l...)
-		}
-	} else {
-		i, err := client.GetIngress(ir.settings.Namespace(), ir.settings.ObjectName)
-		if err != nil {
-			return err
-		}
-
-		ingresses = append(ingresses, i)
-	}
-
-	deleteAndRecreate(ingresses, ir.settings.Reporter, client)
-
-	ir.settings.Reporter.PrintReport()
+	ir.client = client
 	return nil
 }
 
-func deleteAndRecreate(ingresses []v1beta1.Ingress, reporter *util.Reporter, client *k8s.K8sClient) {
-	for _, ingress := range ingresses {
-		err := client.DeleteIngress(&ingress)
+func (ir *IngressCmd) deleteAndRecreate() {
+	ir.ExecuteClientFunctionAndReport(ir.client.Ingress.Delete, "DELETE")
+	ir.settings.Reporter.AddSeperator()
+	ir.ExecuteClientFunctionAndReport(ir.client.Ingress.Create, "CREATE")
+}
+
+func (ir *IngressCmd) ExecuteClientFunctionAndReport(clientFunc func(ingress *v1beta1.Ingress) (*v1beta1.Ingress, error), verb string) {
+	for _, ingress := range ir.ingresses {
+		_, err := clientFunc(&ingress)
 		if err != nil {
-			reporter.Append(ingress.Name, "Ingress", "FAILED", ingress.CreationTimestamp.String())
+			ir.settings.Reporter.Append(ingress.Name, "INGRESS", "FAILED", ingress.CreationTimestamp.String())
 		}
-		reporter.Append(ingress.Name, "Ingress", "DELETED", ingress.CreationTimestamp.String())
-	}
-
-	reporter.AddSeperator()
-
-	for _, ingress := range ingresses {
-		ingress.ResourceVersion = ""
-
-		i, err := client.CreateIngress(&ingress)
-		if err != nil {
-			reporter.Append(ingress.Name, "Ingress", "FAILED", ingress.CreationTimestamp.String())
-		}
-
-		reporter.Append(i.Name, "Ingress", "CREATED", i.CreationTimestamp.String())
+		ir.settings.Reporter.Append(ingress.Name, "INGRESS", verb, ingress.CreationTimestamp.String())
 	}
 }
 
-func mapNamespacesToNames(namespaces []kv1.Namespace) []string {
-	var result []string
-	for _, ns := range namespaces {
-		result = append(result, ns.Name)
+func (ir *IngressCmd) appendIngressesFromNamespace(namespace string) error {
+	objects, err := ir.client.Ingress.Ls(namespace)
+	if err != nil {
+		return err
 	}
-	return result
+
+	ir.ingresses = append(ir.ingresses, objects...)
+	return nil
 }
