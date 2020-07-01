@@ -1,18 +1,12 @@
 package e2e
 
 import (
-	"context"
-	"fmt"
+	"kube-recreate/pkg/k8s"
 	"os"
 	"path"
 	"testing"
 	"time"
 
-	v1 "k8s.io/api/core/v1"
-
-	v1beta1 "k8s.io/api/networking/v1beta1"
-	apiV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/kind/pkg/cluster"
@@ -20,6 +14,7 @@ import (
 
 var (
 	clientset *kubernetes.Clientset
+	client    *k8s.K8sClient
 )
 
 func TestMain(m *testing.M) {
@@ -46,6 +41,7 @@ func createCluster(provider *cluster.Provider) {
 func setup(provider *cluster.Provider) {
 	createCluster(provider)
 	clientset = mustClientset()
+	client = mustClient()
 	populateClusterWithIngresses(clientset, createNamespace(clientset))
 }
 
@@ -86,40 +82,10 @@ func mustClientset() *kubernetes.Clientset {
 	return clientset
 }
 
-func mockStreams() genericclioptions.IOStreams {
-	return genericclioptions.IOStreams{
-		In:     os.Stdin,
-		Out:    os.Stdout,
-		ErrOut: os.Stderr,
+func mustClient() *k8s.K8sClient {
+	client, err := k8s.NewK8sClient()
+	if err != nil {
+		panic(err)
 	}
-}
-
-func createNamespace(clientset *kubernetes.Clientset) []*v1.Namespace {
-	var namespaces []*v1.Namespace
-
-	ctx := context.Background()
-	for i := 0; i < 10; i++ {
-		ns, err := clientset.CoreV1().Namespaces().Create(ctx, &v1.Namespace{ObjectMeta: apiV1.ObjectMeta{Name: fmt.Sprintf("test-%d", i)}}, apiV1.CreateOptions{})
-		if err != nil {
-			panic(err)
-		}
-		namespaces = append(namespaces, ns)
-	}
-	return namespaces
-}
-
-func populateClusterWithIngresses(clientset *kubernetes.Clientset, namespaces []*v1.Namespace) []*v1beta1.Ingress {
-	var ingresses []*v1beta1.Ingress
-	ctx := context.Background()
-	for _, ns := range namespaces {
-		for i := 0; i < 10; i++ {
-			ing, err := clientset.NetworkingV1beta1().Ingresses(ns.Name).Create(ctx, createIngress(fmt.Sprintf("test-ingress-%d", i)), apiV1.CreateOptions{})
-			if err != nil {
-				panic(err)
-			}
-			ingresses = append(ingresses, ing)
-		}
-	}
-
-	return ingresses
+	return client
 }
