@@ -18,7 +18,7 @@ func main() {
 	pflag.CommandLine = flags
 
 	streams := genericclioptions.IOStreams{In: os.Stdin, Out: os.Stdout, ErrOut: os.Stderr}
-	refreshCmd := cmd.NewRefreshCommand(streams, VERSION, COMMIT, BRANCH)
+	refreshCmd := cmd.NewRecreateCommand(streams, VERSION, COMMIT, BRANCH)
 	if err := refreshCmd.Execute(); err != nil {
 		os.Exit(1)
 	}

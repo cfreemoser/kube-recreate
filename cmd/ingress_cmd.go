@@ -98,9 +98,9 @@ func (ir *IngressCmd) ExecuteClientFunctionAndReport(clientFunc func(ingress *v1
 	for _, ingress := range ir.ingresses {
 		_, err := clientFunc(&ingress)
 		if err != nil {
-			ir.settings.Reporter.Append(ingress.Name, "INGRESS", "FAILED", ingress.CreationTimestamp.String())
+			ir.settings.Reporter.Append(ingress.Name, "INGRESS", "FAILED")
 		}
-		ir.settings.Reporter.Append(ingress.Name, "INGRESS", verb, ingress.CreationTimestamp.String())
+		ir.settings.Reporter.Append(ingress.Name, "INGRESS", verb)
 	}
 }
 

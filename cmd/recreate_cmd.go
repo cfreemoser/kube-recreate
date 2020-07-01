@@ -6,7 +6,7 @@ import (
 )
 
 // NewRefreshCommand creates the command for rendering the Kubernetes server version.
-func NewRefreshCommand(streams genericclioptions.IOStreams, version, commit, branch string) *cobra.Command {
+func NewRecreateCommand(streams genericclioptions.IOStreams, version, commit, branch string) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:          "recreate",

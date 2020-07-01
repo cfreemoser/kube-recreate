@@ -2,107 +2,80 @@ package e2e
 
 import (
 	"context"
-	"fmt"
-	"kube-recreate/cmd"
 	"testing"
 
-	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	v1beta1 "k8s.io/api/networking/v1beta1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-func createIngress(name string) *v1beta1.Ingress {
-	return &v1beta1.Ingress{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
-		},
-		Status: v1beta1.IngressStatus{},
-		Spec: v1beta1.IngressSpec{
-			Backend: &v1beta1.IngressBackend{
-				ServiceName: "test",
-				ServicePort: intstr.FromInt(9999),
-			},
-		},
-		TypeMeta: v1.TypeMeta{},
-	}
-}
-
-func lsIngress(t *testing.T, ns string) []v1beta1.Ingress {
-	temp, err := clientset.NetworkingV1beta1().Ingresses(ns).List(context.Background(), v1.ListOptions{})
-	assert.NoError(t, err)
-	return temp.Items
-}
-
-func RefreshCommand() *cobra.Command {
-	return cmd.NewRefreshCommand(mockStreams(), "", "", "")
-}
-
-func TestDeletionOfAllIngressesInAllNamespaces(t *testing.T) {
-	iCmd := RefreshCommand()
-	iCmd.SetArgs([]string{
-		"ingress",
+func TestRecreateAllNamespaces(t *testing.T) {
+	// Arrange
+	iCmd := RecreateCommand("ingress",
 		"--all-namespaces",
-	})
+	)
+	ingressesBefore := mustGetAllIngressesInCluster(t)
 
-	var beforeList []v1beta1.Ingress
+	// Act
+	mustExecute(t, iCmd)
 
-	for i := 0; i < 10; i++ {
-		beforeList = append(beforeList, lsIngress(t, fmt.Sprintf("test-%d", i))...)
-	}
-
-	err := iCmd.Execute()
-	assert.NoError(t, err)
-
-	for _, beforeIngress := range beforeList {
-		afterIngress, err := clientset.NetworkingV1beta1().Ingresses(beforeIngress.Namespace).Get(context.Background(), beforeIngress.Name, v1.GetOptions{})
+	// Assert
+	for _, ingressesAfter := range ingressesBefore {
+		afterIngress, err := clientset.NetworkingV1beta1().Ingresses(ingressesAfter.Namespace).Get(context.Background(), ingressesAfter.Name, v1.GetOptions{})
 		assert.NoError(t, err)
-		assert.NotEqual(t, beforeIngress.ResourceVersion, afterIngress.ResourceVersion)
+		assert.NotEqual(t, ingressesAfter.ResourceVersion, afterIngress.ResourceVersion)
 	}
 }
 
-func TestDeletionOfOneIngress(t *testing.T) {
-	iCmd := RefreshCommand()
-	iCmd.SetArgs([]string{
+func TestRecreateWithObjectName(t *testing.T) {
+	// Arrange
+	iCmd := RecreateCommand(
 		"ingress",
 		"test-ingress-0",
 		"-n",
 		"test-0",
-	})
+	)
+	ingressesBefore := mustLsIngress(t, "test-0")
 
-	beforeList := lsIngress(t, "test-0")
+	// Act
+	mustExecute(t, iCmd)
 
-	err := iCmd.Execute()
-	assert.NoError(t, err)
-
-	afterList := lsIngress(t, "test-0")
-	assert.NoError(t, err)
-
-	assert.NotEqual(t, beforeList[0].ResourceVersion, afterList[0].ResourceVersion)
+	// Assert
+	ingressesAfter := mustLsIngress(t, "test-0")
+	assert.NotEqual(t, ingressesBefore[0].ResourceVersion, ingressesAfter[0].ResourceVersion)
 	for i := 1; i < 10; i++ {
-		assert.Equal(t, beforeList[i].ResourceVersion, afterList[i].ResourceVersion)
+		assert.Equal(t, ingressesBefore[i].ResourceVersion, ingressesAfter[i].ResourceVersion)
 	}
 }
 
-func TestDeletionOfAllIngress(t *testing.T) {
-	iCmd := RefreshCommand()
-	iCmd.SetArgs([]string{
-		"ingress",
+func TestRecreateAllInNamespaces(t *testing.T) {
+	iCmd := RecreateCommand("ingress",
 		"-n",
 		"test-1",
-		"-a",
-	})
+		"-a")
 
-	beforeList := lsIngress(t, "test-1")
-	err := iCmd.Execute()
-	assert.NoError(t, err)
+	ingressesBefore := mustLsIngress(t, "test-1")
+	mustExecute(t, iCmd)
 
-	afterList := lsIngress(t, "test-1")
+	ingressesAfter := mustLsIngress(t, "test-1")
 
 	for i := 0; i < 10; i++ {
-		assert.NotEqual(t, beforeList[i].ResourceVersion, afterList[i].ResourceVersion)
+		assert.NotEqual(t, ingressesBefore[i].ResourceVersion, ingressesAfter[i].ResourceVersion)
 	}
+}
+
+func mustLsIngress(t *testing.T, ns string) []v1beta1.Ingress {
+	result, err := client.Ingress.Ls(ns)
+	assert.NoError(t, err)
+	return result
+}
+
+func mustGetAllIngressesInCluster(t *testing.T) []v1beta1.Ingress {
+	var stateBefore []v1beta1.Ingress
+	namespaces, err := client.Namespace.Ls()
+	assert.NoError(t, err)
+	for _, ns := range namespaces {
+		stateBefore = append(stateBefore, mustLsIngress(t, ns.Name)...)
+	}
+	return stateBefore
 }

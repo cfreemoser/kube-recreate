@@ -21,8 +21,8 @@ func NewReporter(mirror io.Writer) *Reporter {
 	return r
 }
 
-func (r *Reporter) Append(name, resourceType, operation, age string) {
-	r.t.AppendRow(table.Row{name, resourceType, operation, age})
+func (r *Reporter) Append(name, resourceType, operation string) {
+	r.t.AppendRow(table.Row{name, resourceType, operation})
 }
 
 func (r *Reporter) AddSeperator() {
