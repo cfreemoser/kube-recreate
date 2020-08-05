@@ -32,22 +32,28 @@
   <a href="#license">License</a>
 </p>
 
-![screenshot](https://raw.githubusercontent.com/amitmerchant1990/electron-markdownify/master/app/img/markdownify.gif)
-
 ## Key Features
 
-* Ltba
-  - tba
+* Ingress
+  - Recreation of ingress objectss
+  - Removal of annotations
 
 ## How To Use
 
-tba
+```
+kubectl recreate --help
+```
 
 
-## Download
-tba
+## Installation
 
-You can [download](https://github.com/amitmerchant1990/electron-markdownify/releases/tag/v1.2.0) the latest installable version of Markdownify for Windows, macOS and Linux.
+### From source 
+```
+git clone https://github.com/cfreemoser/kube-recreate.git
+sudo make install
+```
+### Latest Build
+You can [download](https://github.com/cfreemoser/kube-recreate/releases) the latest installable version of kube-recreate for Windows, macOS and Linux. Move the binary into your /usr/local/bin directory. 
 
 ## Credits
 
