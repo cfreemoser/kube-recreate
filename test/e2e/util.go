@@ -23,6 +23,14 @@ func createIngress(name string) *v1beta1.Ingress {
 	return &v1beta1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
+			Annotations: map[string]string {
+				"anno1" : "1",
+				"anno2" : "2",
+				"anno3" : "3",
+				"anno4" : "4",
+				"anno5" : "5",
+				"anno6" : "6",
+			},
 		},
 		Status: v1beta1.IngressStatus{},
 		Spec: v1beta1.IngressSpec{
@@ -31,6 +39,7 @@ func createIngress(name string) *v1beta1.Ingress {
 				ServicePort: intstr.FromInt(9999),
 			},
 		},
+
 		TypeMeta: metav1.TypeMeta{},
 	}
 }
