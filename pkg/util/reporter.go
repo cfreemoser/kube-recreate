@@ -17,7 +17,7 @@ func NewReporter(mirror io.Writer) *Reporter {
 
 	r.t.SetOutputMirror(mirror)
 
-	r.t.AppendHeader(table.Row{"Name", "Type", "Operation", "Age"})
+	r.t.AppendHeader(table.Row{"Name", "Type", "Operation"})
 	return r
 }
 
