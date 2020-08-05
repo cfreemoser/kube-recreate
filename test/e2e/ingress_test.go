@@ -64,6 +64,47 @@ func TestRecreateAllInNamespaces(t *testing.T) {
 	}
 }
 
+func TestDeletionOfOneIngressAnnotation(t *testing.T) {
+	iCmd := RecreateCommand("ingress",
+		"-n",
+		"test-1",
+		"-a",
+		"--remove-annotations",
+		"anno1")
+
+	mustExecute(t, iCmd)
+
+	ingressesAfter := mustLsIngress(t, "test-1")
+
+	for _, ingress := range ingressesAfter {
+		for annotation, _ := range ingress.ObjectMeta.Annotations {
+			assert.NotEqual(t, "anno1", annotation)
+		}
+	}
+}
+
+func TestDeletionOfMultipleIngressAnnotations(t *testing.T) {
+	iCmd := RecreateCommand("ingress",
+		"-n",
+		"test-2",
+		"-a",
+		"--remove-annotations",
+		"anno1, anno2, anno3")
+
+	mustExecute(t, iCmd)
+
+	ingressesAfter := mustLsIngress(t, "test-2")
+
+	for _, ingress := range ingressesAfter {
+		for annotation, _ := range ingress.ObjectMeta.Annotations {
+			assert.NotEqual(t, "anno1", annotation)
+			assert.NotEqual(t, "anno2", annotation)
+			assert.NotEqual(t, "anno3", annotation)
+
+		}
+	}
+}
+
 func mustLsIngress(t *testing.T, ns string) []v1beta1.Ingress {
 	result, err := client.Ingress.Ls(ns)
 	assert.NoError(t, err)

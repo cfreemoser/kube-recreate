@@ -2,10 +2,15 @@ package cmd
 
 import (
 	"kube-recreate/pkg/k8s"
+	"strings"
 
 	v1beta1 "k8s.io/api/networking/v1beta1"
 
 	"github.com/spf13/cobra"
+)
+
+var (
+	removeAnnoationsFlag *string
 )
 
 type IngressCmd struct {
@@ -18,7 +23,7 @@ func NewIngressCommand(settings *CmdSetting) *cobra.Command {
 
 	ingressCmd := &IngressCmd{settings: settings}
 
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:          "ingress [name]",
 		Short:        "Deletes and recreates all ingress resources",
 		SilenceUsage: true,
@@ -36,6 +41,10 @@ func NewIngressCommand(settings *CmdSetting) *cobra.Command {
 			return ingressCmd.run()
 		},
 	}
+
+	removeAnnoationsFlag = cmd.PersistentFlags().String("remove-annotations", "", "Comma seperated list of annotations")
+
+	return cmd
 }
 
 func (ingressCmd *IngressCmd) run() error {
@@ -72,9 +81,24 @@ func (ingressCmd *IngressCmd) run() error {
 
 	}
 
+	removeAnnoations := *removeAnnoationsFlag
+	if len(removeAnnoations) > 0 {
+		ingressCmd.removeAnnoations(removeAnnoations)
+	}
+
 	ingressCmd.deleteAndRecreate()
 
 	ingressCmd.settings.Reporter.PrintReport()
+	return nil
+}
+
+func (ir *IngressCmd) removeAnnoations(annotations string) error {
+	for _, annotation := range strings.Split(annotations, ",") {
+		for _, ingress := range ir.ingresses {
+			delete(ingress.Annotations, strings.TrimSpace(annotation))
+		}
+	}
+
 	return nil
 }
 
