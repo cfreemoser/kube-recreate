@@ -77,7 +77,7 @@ func TestDeletionOfOneIngressAnnotation(t *testing.T) {
 	ingressesAfter := mustLsIngress(t, "test-1")
 
 	for _, ingress := range ingressesAfter {
-		for annotation, _ := range ingress.ObjectMeta.Annotations {
+		for annotation := range ingress.ObjectMeta.Annotations {
 			assert.NotEqual(t, "anno1", annotation)
 		}
 	}
@@ -96,7 +96,7 @@ func TestDeletionOfMultipleIngressAnnotations(t *testing.T) {
 	ingressesAfter := mustLsIngress(t, "test-2")
 
 	for _, ingress := range ingressesAfter {
-		for annotation, _ := range ingress.ObjectMeta.Annotations {
+		for annotation := range ingress.ObjectMeta.Annotations {
 			assert.NotEqual(t, "anno1", annotation)
 			assert.NotEqual(t, "anno2", annotation)
 			assert.NotEqual(t, "anno3", annotation)

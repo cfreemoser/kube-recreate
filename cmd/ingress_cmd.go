@@ -83,7 +83,10 @@ func (ingressCmd *IngressCmd) run() error {
 
 	removeAnnoations := *removeAnnoationsFlag
 	if len(removeAnnoations) > 0 {
-		ingressCmd.removeAnnoations(removeAnnoations)
+		err := ingressCmd.removeAnnoations(removeAnnoations)
+		if err != nil {
+			return err
+		}
 	}
 
 	ingressCmd.deleteAndRecreate()
