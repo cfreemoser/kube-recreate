@@ -35,7 +35,7 @@
 ## Key Features
 
 * Ingress
-  - Recreation of ingress objectss
+  - Recreation of ingress objects
   - Removal of annotations
 
 ## How To Use
